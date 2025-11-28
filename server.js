@@ -1177,6 +1177,118 @@ app.get("/api/cost-summary", async (req, res) => {
   }
 });
 
+// ---------------- RENEWALS API ----------------
+
+// GET all renewals
+app.get("/api/renewals", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("renewals")
+      .select("*")
+      .order("sn", { ascending: false });
+
+    if (error) throw error;
+
+    res.json(data);
+  } catch (err) {
+    console.error("❌ Error fetching renewals:", err);
+    res.status(500).send("Error fetching renewals");
+  }
+});
+
+
+// Add new renewal
+app.post("/api/renewals", async (req, res) => {
+  try {
+    const item = req.body;
+
+    const { data, error } = await supabase
+      .from("renewals")
+      .insert([
+        {
+          sn: item.sn,
+          compliance_particulars: item.compliance_particulars,
+          last_year_details: item.last_year_details,
+          authority_provider: item.authority_provider,
+          auth_address: item.auth_address,
+          law_statute: item.law_statute,
+          last_due_date: item.last_due_date,
+          actual_date_of_compliences: item.actual_date_of_compliences,
+          actual_cost: item.actual_cost,
+          frequency: item.frequency,
+          next_due_date: item.next_due_date,
+          notification_status: item.notification_status || "pending",
+        }
+      ])
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    res.status(201).json({ success: true, data });
+
+  } catch (err) {
+    console.error("❌ Error adding renewal:", err);
+    res.status(500).send("Error adding renewal");
+  }
+});
+
+
+// Update renewal
+app.put("/api/renewals/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const item = req.body;
+
+    const { data, error } = await supabase
+      .from("renewals")
+      .update({
+        sn: item.sn,
+        compliance_particulars: item.compliance_particulars,
+        last_year_details: item.last_year_details,
+        authority_provider: item.authority_provider,
+        auth_address: item.auth_address,
+        law_statute: item.law_statute,
+        last_due_date: item.last_due_date,
+        actual_date_of_compliences: item.actual_date_of_compliences,
+        actual_cost: item.actual_cost,
+        frequency: item.frequency,
+        next_due_date: item.next_due_date,
+        notification_status: item.notification_status
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    res.json({ success: true, data });
+
+  } catch (err) {
+    console.error("❌ Error updating renewal:", err);
+    res.status(500).send("Error updating renewal");
+  }
+});
+
+
+// DELETE renewal
+app.delete("/api/renewals/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const { error } = await supabase
+      .from("renewals")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    res.send("Renewal entry removed");
+  } catch (err) {
+    console.error("❌ Error deleting renewal:", err);
+    res.status(500).send("Error deleting renewal");
+  }
+});
 
 
 
