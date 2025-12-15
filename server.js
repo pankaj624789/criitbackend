@@ -1498,22 +1498,24 @@ app.get("/api/asset-allotment/current", async (req, res) => {
   }
 });
 
-// GET distinct users for dropdown
+// GET distinct users for allotment dropdown
 app.get("/api/asset-allotment/users", async (req, res) => {
   try {
-    const result = await pool.query(`
+    const { rows } = await pool.query(`
       SELECT DISTINCT user_name
       FROM asset_allotment
       WHERE user_name IS NOT NULL
+        AND TRIM(user_name) <> ''
       ORDER BY user_name
     `);
 
-    res.json(result.rows.map(r => r.user_name));
+    res.status(200).json(rows.map(r => r.user_name));
   } catch (err) {
-    console.error("GET /asset-allotment/users error:", err);
+    console.error("❌ GET /api/asset-allotment/users error:", err);
     res.status(500).json({ error: "Failed to fetch users" });
   }
 });
+
 
 
 
