@@ -1497,6 +1497,37 @@ app.get("/api/asset-allotment/current", async (req, res) => {
   }
 });
 
+// GET user-wise allotments (MUST BE ABOVE :id ROUTE)
+app.get("/api/asset-allotment/by-user/:username", async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    const result = await pool.query(`
+      SELECT
+        aa.allotment_id,
+        aa.item_name,
+        aa.quantity,
+        aa.allotment_date,
+        aa.return_date,
+        aa.status,
+        aa.remarks,
+        ad.asset_number,
+        ad.make_model,
+        ad.serial_number
+      FROM asset_allotment aa
+      LEFT JOIN asset_details ad
+        ON ad.sn = aa.asset_sn
+      WHERE aa.user_name = $1
+      ORDER BY aa.allotment_date DESC
+    `, [username]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("❌ GET by-user error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
 // GET asset allotment by ID
 app.get("/api/asset-allotment/:id", async (req, res) => {
   try {
