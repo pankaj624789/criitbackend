@@ -1299,24 +1299,23 @@ app.delete("/api/renewals/:id", async (req, res) => {
 });
 
 // GET all asset allotments
-app.get("/api/asset-allotment/:id", async (req, res) => {
+// GET distinct users for allotment dropdown
+app.get("/api/asset-allotment/users", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { rows } = await pool.query(`
+      SELECT DISTINCT user_name
+      FROM public.asset_allotment
+      WHERE user_name IS NOT NULL
+      ORDER BY user_name
+    `);
 
-    const result = await pool.query(
-      `SELECT * FROM asset_allotment WHERE allotment_id = $1`,
-      [id]
-    );
-
-    if (!result.rows.length)
-      return res.status(404).send("Asset allotment not found");
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error("GET /api/asset-allotment/:id error:", err);
-    res.status(500).send("Server Error");
+    res.status(200).json(rows.map(r => r.user_name));
+  } catch (error) {
+    console.error("❌ asset-allotment/users ERROR:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
+
 
 // post asser allotments
 app.post("/api/asset-allotment", async (req, res) => {
@@ -1498,22 +1497,23 @@ app.get("/api/asset-allotment/current", async (req, res) => {
   }
 });
 
-// GET distinct users for allotment dropdown
-// GET distinct users (FIXED)
-// GET distinct users (SAFE VERSION)
-app.get("/api/asset-allotment/users", async (req, res) => {
+// GET asset allotment by ID
+app.get("/api/asset-allotment/:id", async (req, res) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT DISTINCT user_name 
-       FROM public.asset_allotment
-       WHERE user_name IS NOT NULL
-       ORDER BY user_name`
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT * FROM asset_allotment WHERE allotment_id = $1`,
+      [id]
     );
 
-    res.status(200).json(rows.map(r => r.user_name));
-  } catch (error) {
-    console.error("❌ asset-allotment/users ERROR:", error.message);
-    res.status(500).json({ error: error.message });
+    if (!result.rows.length)
+      return res.status(404).send("Asset allotment not found");
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("GET /api/asset-allotment/:id error:", err);
+    res.status(500).send("Server Error");
   }
 });
 
