@@ -1500,20 +1500,20 @@ app.get("/api/asset-allotment/current", async (req, res) => {
 
 // GET distinct users for allotment dropdown
 // GET distinct users (FIXED)
+// GET distinct users (SAFE VERSION)
 app.get("/api/asset-allotment/users", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT DISTINCT TRIM(user_name) AS user_name
-      FROM asset_allotment
-      WHERE user_name IS NOT NULL
-        AND TRIM(user_name) <> ''
-      ORDER BY user_name
-    `);
+    const { rows } = await pool.query(
+      `SELECT DISTINCT user_name 
+       FROM public.asset_allotment
+       WHERE user_name IS NOT NULL
+       ORDER BY user_name`
+    );
 
-    res.json(result.rows.map(r => r.user_name));
-  } catch (err) {
-    console.error("GET /asset-allotment/users error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(200).json(rows.map(r => r.user_name));
+  } catch (error) {
+    console.error("❌ asset-allotment/users ERROR:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
