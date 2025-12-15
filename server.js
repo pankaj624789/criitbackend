@@ -1498,7 +1498,7 @@ app.get("/api/asset-allotment/current", async (req, res) => {
   }
 });
 
-// GET distinct users
+// GET distinct users for dropdown
 app.get("/api/asset-allotment/users", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -1507,31 +1507,14 @@ app.get("/api/asset-allotment/users", async (req, res) => {
       WHERE user_name IS NOT NULL
       ORDER BY user_name
     `);
-    const users = result.rows.map(r => r.user_name);
-    res.json(users);
+
+    res.json(result.rows.map(r => r.user_name));
   } catch (err) {
-    console.error("GET /api/asset-allotment/users error:", err);
-    res.status(500).send("Server Error");
+    console.error("GET /asset-allotment/users error:", err);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
-// GET user-wise allotments safely
-app.get("/api/asset-allotment/user/:username", async (req, res) => {
-  try {
-    const username = decodeURIComponent(req.params.username); // decode any special characters
-    const result = await pool.query(`
-      SELECT aa.*, ad.asset_number, ad.make_model
-      FROM asset_allotment aa
-      JOIN asset_details ad ON ad.sn = aa.asset_sn
-      WHERE aa.user_name = $1
-      ORDER BY aa.allotment_date DESC
-    `, [username]);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("GET /api/asset-allotment/user/:username error:", err);
-    res.status(500).send("Server Error");
-  }
-});
 
 
 
