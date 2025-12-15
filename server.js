@@ -1498,6 +1498,21 @@ app.get("/api/asset-allotment/current", async (req, res) => {
   }
 });
 
+// GET distinct users
+app.get("/api/asset-allotment/users", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT user_name FROM asset_allotment
+      WHERE user_name IS NOT NULL
+      ORDER BY user_name
+    `);
+    const users = result.rows.map(r => r.user_name);
+    res.json(users);
+  } catch (err) {
+    console.error("GET /asset-allotment/users error:", err);
+    res.status(500).send("Server Error");
+  }
+});
 
 
 
