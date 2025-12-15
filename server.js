@@ -1317,6 +1317,7 @@ app.get("/api/asset-allotment/users", async (req, res) => {
 });
 
 
+
 // post asser allotments
 app.post("/api/asset-allotment", async (req, res) => {
   try {
@@ -1504,13 +1505,8 @@ app.get("/api/asset-allotment/by-user/:username", async (req, res) => {
 
     const result = await pool.query(`
       SELECT
-        aa.allotment_id,
-        aa.item_name,
-        aa.quantity,
-        aa.allotment_date,
-        aa.return_date,
-        aa.status,
-        aa.remarks,
+        aa.*,
+      
         ad.asset_number,
         ad.make_model,
         ad.serial_number
