@@ -1298,6 +1298,206 @@ app.delete("/api/renewals/:id", async (req, res) => {
   }
 });
 
+// GET all asset allotments
+app.get("/api/asset-allotment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `SELECT * FROM asset_allotment WHERE allotment_id = $1`,
+      [id]
+    );
+
+    if (!result.rows.length)
+      return res.status(404).send("Asset allotment not found");
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("GET /api/asset-allotment/:id error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+// post asser allotments
+app.post("/api/asset-allotment", async (req, res) => {
+  try {
+    const d = req.body;
+
+    const insertSql = `
+      INSERT INTO asset_allotment (
+        asset_sn,
+        user_name,
+        department,
+        location,
+        item_name,
+        item_make,
+        item_serial_no,
+        quantity,
+        allotment_date,
+        status,
+        remarks
+      ) VALUES (
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+      )
+      RETURNING *;
+    `;
+
+    const params = [
+      d.asset_sn,
+      d.user_name,
+      d.department,
+      d.location,
+      d.item_name,
+      d.item_make || null,
+      d.item_serial_no || null,
+      d.quantity || 1,
+      d.allotment_date || new Date(),
+      d.status || "Allotted",
+      d.remarks || null,
+    ];
+
+    const result = await pool.query(insertSql, params);
+
+    res.json({
+      message: "Asset item allotted successfully",
+      data: result.rows[0],
+    });
+  } catch (err) {
+    console.error("POST /api/asset-allotment error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+// PUT update asset allotment
+app.put("/api/asset-allotment/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const d = req.body;
+
+    const updateSql = `
+      UPDATE asset_allotment SET
+        asset_sn = $1,
+        user_name = $2,
+        department = $3,
+        location = $4,
+        item_name = $5,
+        item_make = $6,
+        item_serial_no = $7,
+        quantity = $8,
+        allotment_date = $9,
+        return_date = $10,
+        status = $11,
+        remarks = $12
+      WHERE allotment_id = $13
+      RETURNING *;
+    `;
+
+    const params = [
+      d.asset_sn,
+      d.user_name,
+      d.department,
+      d.location,
+      d.item_name,
+      d.item_make,
+      d.item_serial_no,
+      d.quantity,
+      d.allotment_date,
+      d.return_date,
+      d.status,
+      d.remarks,
+      id,
+    ];
+
+    const result = await pool.query(updateSql, params);
+
+    res.json({
+      message: "Asset allotment updated",
+      data: result.rows[0],
+    });
+  } catch (err) {
+    console.error("PUT /api/asset-allotment/:id error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+// PUT return asset
+app.put("/api/asset-allotment/return/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      `
+      UPDATE asset_allotment
+      SET
+        return_date = CURRENT_DATE,
+        status = 'Returned'
+      WHERE allotment_id = $1
+      RETURNING *;
+      `,
+      [id]
+    );
+
+    res.json({
+      message: "Asset item returned successfully",
+      data: result.rows[0],
+    });
+  } catch (err) {
+    console.error("PUT /api/asset-allotment/return/:id error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+// DELETE asset allotment
+app.delete("/api/asset-allotment/:id", async (req, res) => {
+  try {
+    await pool.query(
+      `DELETE FROM asset_allotment WHERE allotment_id = $1`,
+      [req.params.id]
+    );
+
+    res.json({ message: "Asset allotment deleted" });
+  } catch (err) {
+    console.error("DELETE /api/asset-allotment/:id error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
+
+// GET currently allotted assets with asset master data
+app.get("/api/asset-allotment/current", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        aa.allotment_id,
+        aa.asset_sn,
+        aa.user_name,
+        aa.department,
+        aa.location,
+        aa.item_name,
+        aa.item_make,
+        aa.item_serial_no,
+        aa.quantity,
+        aa.allotment_date,
+        aa.status,
+        ad.asset_number,
+        ad.make_model,
+        ad.serial_number
+      FROM asset_allotment aa
+      JOIN asset_details ad
+        ON ad.sn = aa.asset_sn
+      WHERE aa.status = 'Allotted'
+      ORDER BY aa.allotment_date DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("GET /api/asset-allotment/current error:", err);
+    res.status(500).send("Server Error");
+  }
+});
+
 
 
 
