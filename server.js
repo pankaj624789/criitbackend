@@ -1544,6 +1544,24 @@ app.get("/api/asset-allotment/:id", async (req, res) => {
   }
 });
 
+// GET distinct users from asset_details
+// Use this for User Name dropdown
+app.get("/api/assets/users", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT user_name
+      FROM asset_details
+      WHERE user_name IS NOT NULL
+        AND TRIM(user_name) <> ''
+      ORDER BY user_name
+    `);
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("❌ GET asset users error:", err);
+    res.status(500).json({ error: "Server Error" });
+  }
+});
 
 
 
